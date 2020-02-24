@@ -49,6 +49,8 @@ export default class Repository {
         ref: `refs/heads/${branch}`,
         sha: base
       } as any);
+
+      core.debug(`Successfully created branch: ${branch}`);
     } catch (err) {
       core.debug(err);
       throw 'Error creating the new branch';
@@ -128,6 +130,8 @@ export default class Repository {
         ref: `heads/${branch}`,
         sha: commit
       } as any);
+
+      core.debug(`Successfully updated branch: ${branch}`);
     } catch (err) {
       core.debug(err);
       throw 'Error updating the branch';
@@ -144,6 +148,10 @@ export default class Repository {
         base: base,
         body: body
       } as any);
+
+      core.debug(
+        `Successfully opened the pull request from ${head} to ${base}`
+      );
     } catch (err) {
       core.debug(err);
       throw 'Error creating the pull request';

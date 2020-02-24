@@ -26079,7 +26079,8 @@ function run() {
             const token = core.getInput('token', { required: true });
             const repo = core.getInput('repo', { required: true });
             const branchPrefix = core.getInput('branchPrefix');
-            core.info(`Checking for updates on ${packagePath}...`);
+            core.info(`Checking for updates on ${packagePath} in ${repo}...`);
+            core.info(`Using branch prefix: ${branchPrefix}`);
             const content = package_1.loadPackage(packagePath);
             const changes = yield package_1.updateDependencies(content.dependencies);
             if (!changes.size) {
@@ -26091,6 +26092,7 @@ function run() {
             const newBranch = `${branchPrefix}/${new Date().getTime()}`;
             const defaultBranch = yield repository.getDefaultBranch();
             const latestCommit = yield repository.getLatestCommit(defaultBranch);
+            core.debug(`Updating ${defaultBranch}@${latestCommit}...`);
             yield repository.createBranch(newBranch, latestCommit);
             const newCommit = yield repository.createCommit(packagePath, content, 'Update Dependencies', latestCommit);
             yield repository.updateBranch(newBranch, newCommit);
@@ -26098,8 +26100,8 @@ function run() {
             core.info('Successfully opened a PR to update the dependencies.');
         }
         catch (err) {
-            core.error(`Failed to update dependencies: ${err}`);
-            process.exit(1);
+            core.debug(err);
+            core.setFailed(`Failed to update dependencies: ${err}`);
         }
     });
 }
@@ -33839,6 +33841,7 @@ class Repository {
                     ref: `refs/heads/${branch}`,
                     sha: base
                 });
+                core.debug(`Successfully created branch: ${branch}`);
             }
             catch (err) {
                 core.debug(err);
@@ -33912,6 +33915,7 @@ class Repository {
                     ref: `heads/${branch}`,
                     sha: commit
                 });
+                core.debug(`Successfully updated branch: ${branch}`);
             }
             catch (err) {
                 core.debug(err);
@@ -33930,6 +33934,7 @@ class Repository {
                     base: base,
                     body: body
                 });
+                core.debug(`Successfully opened the pull request from ${head} to ${base}`);
             }
             catch (err) {
                 core.debug(err);

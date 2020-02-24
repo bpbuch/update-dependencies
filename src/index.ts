@@ -9,7 +9,8 @@ async function run() {
     const repo = core.getInput('repo', { required: true });
     const branchPrefix = core.getInput('branchPrefix');
 
-    core.info(`Checking for updates on ${packagePath}...`);
+    core.info(`Checking for updates on ${packagePath} in ${repo}...`);
+    core.info(`Using branch prefix: ${branchPrefix}`);
 
     const content = loadPackage(packagePath);
 
@@ -27,6 +28,8 @@ async function run() {
     const newBranch = `${branchPrefix}/${new Date().getTime()}`;
     const defaultBranch = await repository.getDefaultBranch();
     const latestCommit = await repository.getLatestCommit(defaultBranch);
+
+    core.debug(`Updating ${defaultBranch}@${latestCommit}...`);
 
     await repository.createBranch(newBranch, latestCommit);
 
@@ -48,8 +51,8 @@ async function run() {
 
     core.info('Successfully opened a PR to update the dependencies.');
   } catch (err) {
-    core.error(`Failed to update dependencies: ${err}`);
-    process.exit(1);
+    core.debug(err);
+    core.setFailed(`Failed to update dependencies: ${err}`);
   }
 }
 
