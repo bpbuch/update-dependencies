@@ -1,0 +1,14 @@
+name: 'update-dependencies'
+description: 'Keep Dependencies Up to Date'
+author: 'Brian Buchanan'
+inputs:
+  token:
+    description: 'GitHub Auth Token'
+    required: true
+  packagePath:
+    description: 'Path to package.json File'
+    required: false
+    default: './package.json'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
