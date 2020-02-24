@@ -26080,8 +26080,7 @@ function run() {
             const repo = core.getInput('repo', { required: true });
             core.info(`Checking for updates on ${packagePath}...`);
             const content = package_1.loadPackage(packagePath);
-            const { dependencies } = content;
-            const wasUpdated = yield package_1.updateDependencies(dependencies);
+            const wasUpdated = yield package_1.updateDependencies(content.dependencies);
             if (!wasUpdated) {
                 core.info('No dependency updates found.');
                 process.exit(0);
@@ -33874,7 +33873,7 @@ class Repository {
                             sha: blobSha
                         }
                     ],
-                    'base_tree': parent
+                    base_tree: parent
                 });
                 treeSha = response.data.sha;
             }
@@ -33886,7 +33885,7 @@ class Repository {
                 const response = yield this.octokit.git.createCommit({
                     owner: this.owner,
                     repo: this.repo,
-                    message: 'Update Dependencies',
+                    message,
                     tree: treeSha,
                     parents: [parent],
                     author: {
