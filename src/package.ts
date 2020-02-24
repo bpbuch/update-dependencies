@@ -6,6 +6,7 @@ import * as semver from 'semver';
 function loadPackage(path: string) {
   try {
     const content = fs.readFileSync(path, 'utf8');
+
     return JSON.parse(content);
   } catch (err) {
     core.debug(err);
@@ -25,33 +26,46 @@ async function getLatestVersion(dependency: string) {
 }
 
 async function updateDependencies(dependencies: string[]) {
-  let wasUpdated = false;
+  let changes = new Map() as Map<string, string[]>;
 
   for (const dependency in dependencies) {
-    const latest = await getLatestVersion(dependency);
+    const latestVersion = await getLatestVersion(dependency);
 
-    const current = dependencies[dependency];
+    const currentVersion = dependencies[dependency];
 
-    if (semver.satisfies(latest, current)) {
+    if (semver.satisfies(latestVersion, currentVersion)) {
       continue;
     }
 
     let newVersion = '';
 
-    if (isNaN(current.charAt(0) as any)) {
-      newVersion += current.charAt(0);
+    if (isNaN(currentVersion.charAt(0) as any)) {
+      newVersion += currentVersion.charAt(0);
     }
 
-    newVersion += latest;
+    newVersion += latestVersion;
 
-    core.debug(`Updating ${dependency} from ${current} to ${newVersion}`);
+    core.debug(
+      `Updating ${dependency} from ${currentVersion} to ${newVersion}`
+    );
 
     dependencies[dependency] = newVersion;
 
-    wasUpdated = true;
+    changes.set(dependency, [currentVersion, newVersion]);
   }
 
-  return wasUpdated;
+  return changes;
 }
 
-export { loadPackage, updateDependencies };
+function changesToTable(changes: Map<string, string[]>) {
+  let table =
+    '| Dependency | Current Version | New Version |\n| ---- | ---- | ----|\n';
+
+  changes.forEach((value, key) => {
+    table += `| ${key} | ${value[0]}| ${value[1]} |\n`;
+  });
+
+  return table;
+}
+
+export { loadPackage, updateDependencies, changesToTable };

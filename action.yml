@@ -3,12 +3,19 @@ description: 'Keep Dependencies Up to Date'
 author: 'Brian Buchanan'
 inputs:
   token:
-    description: 'GitHub Auth Token'
+    description: 'GitHub auth token'
+    required: true
+  repo: 
+    description: 'The owner and repository name'
     required: true
   packagePath:
     description: 'Path to package.json File'
     required: false
     default: './package.json'
+  branchPrefix:
+    description: 'The prefix of the branch name for the pull request'
+    required: false
+    default: 'update'
 runs:
   using: 'node12'
   main: 'dist/index.js'

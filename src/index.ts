@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { loadPackage, updateDependencies } from './package';
+import { loadPackage, updateDependencies, changesToTable } from './package';
 import Repository from './repository';
 
 async function run() {
@@ -7,14 +7,15 @@ async function run() {
     const packagePath = core.getInput('packagePath');
     const token = core.getInput('token', { required: true });
     const repo = core.getInput('repo', { required: true });
+    const branchPrefix = core.getInput('branchPrefix');
 
     core.info(`Checking for updates on ${packagePath}...`);
 
     const content = loadPackage(packagePath);
 
-    const wasUpdated = await updateDependencies(content.dependencies);
+    const changes = await updateDependencies(content.dependencies);
 
-    if (!wasUpdated) {
+    if (!changes.size) {
       core.info('No dependency updates found.');
       process.exit(0);
     }
@@ -23,7 +24,7 @@ async function run() {
 
     const repository = new Repository(token, owner, project);
 
-    const newBranch = `update-dependencies/${new Date().getTime()}`;
+    const newBranch = `${branchPrefix}/${new Date().getTime()}`;
     const defaultBranch = await repository.getDefaultBranch();
     const latestCommit = await repository.getLatestCommit(defaultBranch);
 
@@ -42,8 +43,10 @@ async function run() {
       newBranch,
       defaultBranch,
       'Update Dependencies',
-      ''
+      changesToTable(changes)
     );
+
+    core.info('Successfully opened a PR to update the dependencies.');
   } catch (err) {
     core.error(`Failed to update dependencies: ${err}`);
     process.exit(1);

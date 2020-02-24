@@ -26078,22 +26078,24 @@ function run() {
             const packagePath = core.getInput('packagePath');
             const token = core.getInput('token', { required: true });
             const repo = core.getInput('repo', { required: true });
+            const branchPrefix = core.getInput('branchPrefix');
             core.info(`Checking for updates on ${packagePath}...`);
             const content = package_1.loadPackage(packagePath);
-            const wasUpdated = yield package_1.updateDependencies(content.dependencies);
-            if (!wasUpdated) {
+            const changes = yield package_1.updateDependencies(content.dependencies);
+            if (!changes.size) {
                 core.info('No dependency updates found.');
                 process.exit(0);
             }
             const [owner, project] = repo.split('/');
             const repository = new repository_1.default(token, owner, project);
-            const newBranch = `update-dependencies/${new Date().getTime()}`;
+            const newBranch = `${branchPrefix}/${new Date().getTime()}`;
             const defaultBranch = yield repository.getDefaultBranch();
             const latestCommit = yield repository.getLatestCommit(defaultBranch);
             yield repository.createBranch(newBranch, latestCommit);
             const newCommit = yield repository.createCommit(packagePath, content, 'Update Dependencies', latestCommit);
             yield repository.updateBranch(newBranch, newCommit);
-            yield repository.createPR(newBranch, defaultBranch, 'Update Dependencies', '');
+            yield repository.createPR(newBranch, defaultBranch, 'Update Dependencies', package_1.changesToTable(changes));
+            core.info('Successfully opened a PR to update the dependencies.');
         }
         catch (err) {
             core.error(`Failed to update dependencies: ${err}`);
@@ -54712,26 +54714,34 @@ function getLatestVersion(dependency) {
 }
 function updateDependencies(dependencies) {
     return __awaiter(this, void 0, void 0, function* () {
-        let wasUpdated = false;
+        let changes = new Map();
         for (const dependency in dependencies) {
-            const latest = yield getLatestVersion(dependency);
-            const current = dependencies[dependency];
-            if (semver.satisfies(latest, current)) {
+            const latestVersion = yield getLatestVersion(dependency);
+            const currentVersion = dependencies[dependency];
+            if (semver.satisfies(latestVersion, currentVersion)) {
                 continue;
             }
             let newVersion = '';
-            if (isNaN(current.charAt(0))) {
-                newVersion += current.charAt(0);
+            if (isNaN(currentVersion.charAt(0))) {
+                newVersion += currentVersion.charAt(0);
             }
-            newVersion += latest;
-            core.debug(`Updating ${dependency} from ${current} to ${newVersion}`);
+            newVersion += latestVersion;
+            core.debug(`Updating ${dependency} from ${currentVersion} to ${newVersion}`);
             dependencies[dependency] = newVersion;
-            wasUpdated = true;
+            changes.set(dependency, [currentVersion, newVersion]);
         }
-        return wasUpdated;
+        return changes;
     });
 }
 exports.updateDependencies = updateDependencies;
+function changesToTable(changes) {
+    let table = '| Dependency | Current Version | New Version |\n| ---- | ---- | ----|\n';
+    changes.forEach((value, key) => {
+        table += `| ${key} | ${value[0]}| ${value[1]} |\n`;
+    });
+    return table;
+}
+exports.changesToTable = changesToTable;
 
 
 /***/ }),
