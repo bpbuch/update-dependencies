@@ -1,7 +1,7 @@
 {
   "name": "update-dependencies",
   "version": "1.0.0",
-  "description": "GitHub Action for staying up to date on the latest dependencies",
+  "description": "GitHub Action for staying up to date on the latest npm dependencies",
   "author": "Brian Buchanan",
   "license": "BSD-3-Clause",
   "homepage": "https://github.com/bpbuch/update-dependencies#readme",

@@ -17,7 +17,7 @@ export default class Repository {
       const response = await this.octokit.repos.get({
         owner: this.owner,
         repo: this.repo
-      } as any);
+      });
 
       return response.data.default_branch;
     } catch (err) {
@@ -32,7 +32,7 @@ export default class Repository {
         owner: this.owner,
         repo: this.repo,
         ref: `heads/${branch}`
-      } as any);
+      });
 
       return response.data.object.sha;
     } catch (err) {
@@ -48,7 +48,7 @@ export default class Repository {
         repo: this.repo,
         ref: `refs/heads/${branch}`,
         sha: base
-      } as any);
+      });
 
       core.debug(`Successfully created branch: ${branch}`);
     } catch (err) {
@@ -72,7 +72,7 @@ export default class Repository {
           'base64'
         ),
         encoding: 'base64'
-      } as any);
+      });
 
       blobSha = response.data.sha;
     } catch (err) {
@@ -94,7 +94,7 @@ export default class Repository {
           }
         ],
         base_tree: parent
-      } as any);
+      });
 
       treeSha = response.data.sha;
     } catch (err) {
@@ -113,7 +113,7 @@ export default class Repository {
           name: 'github-actions',
           email: 'actions@github.com'
         }
-      } as any);
+      });
 
       return response.data.sha;
     } catch (err) {
@@ -129,7 +129,7 @@ export default class Repository {
         repo: this.repo,
         ref: `heads/${branch}`,
         sha: commit
-      } as any);
+      });
 
       core.debug(`Successfully updated branch: ${branch}`);
     } catch (err) {
@@ -147,7 +147,7 @@ export default class Repository {
         head: head,
         base: base,
         body: body
-      } as any);
+      });
 
       core.debug(
         `Successfully opened the pull request from ${head} to ${base}`
