@@ -16,6 +16,12 @@ inputs:
     description: 'The prefix of the branch name for the pull request'
     required: false
     default: 'update'
+  include:
+    description: 'A comma separated list specifying which dependencies to update'
+    required: false
+  exclude:
+    description: 'A comma separated list specifying which dependencies not to update'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

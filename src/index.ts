@@ -8,13 +8,20 @@ async function run() {
     const token = core.getInput('token', { required: true });
     const repo = core.getInput('repo', { required: true });
     const branchPrefix = core.getInput('branchPrefix');
+    const include = core.getInput('include').replace(/\s/g, '');
+    const exclude = core.getInput('exclude').replace(/\s/g, '');
 
     core.info(`Checking for updates on ${packagePath} in ${repo}...`);
     core.info(`Using branch prefix: ${branchPrefix}`);
+    core.info(`Include: ${include}`);
+    core.info(`Exclude: ${exclude}`);
 
     const content = loadPackage(packagePath);
 
-    const changes = await updateDependencies(content.dependencies);
+    const changes = await updateDependencies(content.dependencies, {
+      include: include.length ? include.split(',') : [],
+      exclude: exclude.length ? exclude.split(',') : []
+    });
 
     if (!changes.size) {
       core.info('No dependency updates found.');

@@ -10,6 +10,8 @@ GitHub Action for staying up to date on the latest npm dependencies
 | repo | The name of the owner and repository (ex. `octocat/Hello-World`)| :white_check_mark: | |
 | packagePath | A relative path to a single package.json file | :x: | `package.json` |
 | branchPrefix | The branch name prefix for the pull request | :x: | `update` |
+| include | A comma separated list specifying which dependencies to update | :x: | |
+| exclude | A comma separated list specifying which dependencies not to update | :x: | |
 
 # Sample Workflows
 

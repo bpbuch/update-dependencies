@@ -26206,10 +26206,17 @@ function run() {
             const token = core.getInput('token', { required: true });
             const repo = core.getInput('repo', { required: true });
             const branchPrefix = core.getInput('branchPrefix');
+            const include = core.getInput('include').replace(/\s/g, '');
+            const exclude = core.getInput('exclude').replace(/\s/g, '');
             core.info(`Checking for updates on ${packagePath} in ${repo}...`);
             core.info(`Using branch prefix: ${branchPrefix}`);
+            core.info(`Include: ${include}`);
+            core.info(`Exclude: ${exclude}`);
             const content = package_1.loadPackage(packagePath);
-            const changes = yield package_1.updateDependencies(content.dependencies);
+            const changes = yield package_1.updateDependencies(content.dependencies, {
+                include: include.length ? include.split(',') : [],
+                exclude: exclude.length ? exclude.split(',') : []
+            });
             if (!changes.size) {
                 core.info('No dependency updates found.');
                 process.exit(0);
@@ -54807,7 +54814,12 @@ exports.loadPackage = loadPackage;
 function getLatestVersion(dependency) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const res = yield npmFetch.json(`/${dependency}`);
+            const res = yield npmFetch.json(`/${dependency}`).catch(err => {
+                throw err;
+            });
+            if (!res.hasOwnProperty('dist-tags')) {
+                throw `Unexpected payload while getting latest version for ${dependency}`;
+            }
             return res['dist-tags'].latest;
         }
         catch (err) {
@@ -54816,25 +54828,38 @@ function getLatestVersion(dependency) {
         }
     });
 }
-function updateDependencies(dependencies) {
+function updateDependencies(dependencies, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        let changes = new Map();
-        for (const dependency in dependencies) {
-            const latestVersion = yield getLatestVersion(dependency);
-            const currentVersion = dependencies[dependency];
-            if (semver.satisfies(latestVersion, currentVersion)) {
-                continue;
+        try {
+            let changes = new Map();
+            for (const dependency in dependencies) {
+                if (options.include.length && !options.include.includes(dependency)) {
+                    core.debug(`Skipping ${dependency}: Not found in include`);
+                    continue;
+                }
+                if (options.exclude.length && options.exclude.includes(dependency)) {
+                    core.debug(`Skipping ${dependency}: Found in exclude`);
+                    continue;
+                }
+                const latestVersion = yield getLatestVersion(dependency);
+                const currentVersion = dependencies[dependency];
+                if (semver.satisfies(latestVersion, currentVersion)) {
+                    continue;
+                }
+                let newVersion = '';
+                if (isNaN(currentVersion.charAt(0))) {
+                    newVersion += currentVersion.charAt(0);
+                }
+                newVersion += latestVersion;
+                core.debug(`Updating ${dependency} from ${currentVersion} to ${newVersion}`);
+                dependencies[dependency] = newVersion;
+                changes.set(dependency, [currentVersion, newVersion]);
             }
-            let newVersion = '';
-            if (isNaN(currentVersion.charAt(0))) {
-                newVersion += currentVersion.charAt(0);
-            }
-            newVersion += latestVersion;
-            core.debug(`Updating ${dependency} from ${currentVersion} to ${newVersion}`);
-            dependencies[dependency] = newVersion;
-            changes.set(dependency, [currentVersion, newVersion]);
+            return changes;
         }
-        return changes;
+        catch (err) {
+            throw err;
+        }
     });
 }
 exports.updateDependencies = updateDependencies;
